@@ -1,0 +1,119 @@
+
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Animal Production Farm Management</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Green-50 */
+        }
+        /* Custom animation for fade-in effect */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .animate-fade-in {
+            animation: fadeIn 1s ease-out forwards;
+        }
+        .animate-fade-in-delay {
+            animation: fadeIn 1s ease-out 0.3s forwards;
+            opacity: 0; /* Start invisible */
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-green-700 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-white text-2xl font-bold rounded-lg px-3 py-2 hover:bg-green-600 transition-colors">
+                FarmProduction & Services
+            </a>
+            <div class="space-x-4">
+                <a href="/" class="text-white hover:text-green-200 text-lg px-3 py-2 rounded-lg transition-colors">Home</a>
+                <a href="/login" class="bg-white text-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-green-100 transition-colors">Admin Login</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Hero Section -->
+    <header class="bg-green-600 text-white py-20 px-4">
+        <div class="container mx-auto text-center">
+            <h1 class="text-5xl font-extrabold mb-4 animate-fade-in">Efficient Animal Production Farm Management</h1>
+            <p class="text-xl mb-8 opacity-90 animate-fade-in-delay">Streamline your daily operations, track records, and boost productivity for all your livestock.</p>
+            <a href="/login" class="bg-white text-green-700 hover:bg-green-100 px-8 py-4 rounded-full text-lg font-bold shadow-lg transform hover:scale-105 transition-transform duration-300">
+                Get Started
+            </a>
+        </div>
+    </header>
+    <div class="container">
+         <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <img src="/static/image.png" alt="Poultry Birds" class="w-full h-auto rounded-lg mb-4 object-cover">
+                     </div>
+    </div>
+    <!-- Animal Showcase Section -->
+    <section class="py-16 px-4 bg-gray-100">
+        <div class="container mx-auto text-center">
+            <h2 class="text-4xl font-bold text-gray-800 mb-12">Our Diverse Livestock</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <img src="/static/image.png" alt="Poultry Birds" class="w-full h-auto rounded-lg mb-4 object-cover">
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Healthy Poultry</h3>
+                    <p class="text-gray-600">Producing high-quality eggs and meat with optimal care.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://placehold.co/400x250/C7D2FE/3730A3?text=Goats" alt="Goats" class="w-full h-auto rounded-lg mb-4 object-cover">
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Vibrant Goats</h3>
+                    <p class="text-gray-600">Robust goat herds for milk and meat production.</p>
+                </div>
+                <div class="bg-white p-6 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <img src="https://placehold.co/400x250/FDE68A/92400E?text=Sheep" alt="Sheep" class="w-full h-auto rounded-lg mb-4 object-cover">
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-2">Strong Sheep</h3>
+                    <p class="text-gray-600">Thriving sheep for wool, meat, and breeding.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Features Section -->
+    <section class="py-16 px-4 bg-white">
+        <div class="container mx-auto text-center">
+            <h2 class="text-4xl font-bold text-gray-800 mb-12">Key Features for Your Farm</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-10">
+                <div class="bg-green-50 p-8 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-green-600 mb-4">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Daily Record Keeping</h3>
+                    <p class="text-gray-600">Easily log feeds, expenditures, and profits for all your farm animals.</p>
+                </div>
+                <div class="bg-green-50 p-8 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-green-600 mb-4">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 12h.01M12 12h.01M16 12h.01M21 12c0 4.418-4.03 8-9 8a9.863 9.863 0 01-4.255-.949L3 20l1.395-3.105A9.732 9.732 0 0112 4c4.97 0 9 3.582 9 8z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Worker Communication</h3>
+                    <p class="text-gray-600">Send customized SMS notifications to field workers about feeding schedules.</p>
+                </div>
+                <div class="bg-green-50 p-8 rounded-lg shadow-md hover:shadow-xl transform hover:scale-105 transition-transform duration-300">
+                    <div class="text-green-600 mb-4">
+                        <svg class="w-12 h-12 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z"></path></svg>
+                    </div>
+                    <h3 class="text-2xl font-semibold text-gray-700 mb-4">Farm Statistics</h3>
+                    <p class="text-gray-600">Gain insights into your farm's performance with comprehensive statistics.</p>
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 px-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 FarmPro. All rights reserved.</p>
+        </div>
+    </footer>
+</body>
+</html>
+

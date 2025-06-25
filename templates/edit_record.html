@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Record - FarmPro Admin</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f0fdf4; /* Green-50 */
+        }
+        .flash-message {
+            padding: 0.75rem 1rem;
+            border-radius: 0.5rem;
+            margin-bottom: 1rem;
+            font-weight: 600;
+        }
+        .flash-success { background-color: #d1fae5; color: #065f46; }
+        .flash-danger { background-color: #fee2e2; color: #991b1b; }
+        .flash-info { background-color: #e0f2fe; color: #1e40af; }
+        .flash-warning { background-color: #fffbeb; color: #9a3412; }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen">
+    <!-- Navbar -->
+    <nav class="bg-green-700 p-4 shadow-lg">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="/" class="text-white text-2xl font-bold rounded-lg px-3 py-2 hover:bg-green-600 transition-colors">
+                FarmPro Admin
+            </a>
+            <div class="space-x-4">
+                <a href="/admin" class="text-white hover:text-green-200 text-lg px-3 py-2 rounded-lg transition-colors">Dashboard</a>
+                <a href="/admin/view_records" class="text-white hover:text-green-200 text-lg px-3 py-2 rounded-lg transition-colors">View Records</a>
+                <a href="/logout" class="bg-white text-green-700 px-4 py-2 rounded-lg font-semibold hover:bg-green-100 transition-colors">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container mx-auto p-6 flex-grow">
+        <h1 class="text-4xl font-extrabold text-gray-800 mb-8 text-center">Edit Farm Record</h1>
+
+        <!-- Flash Messages -->
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                <div class="w-full max-w-xl mx-auto mb-6">
+                    {% for category, message in messages %}
+                        <div class="flash-message flash-{{ category }}">
+                            {{ message }}
+                        </div>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        {% endwith %}
+
+        <div class="bg-white p-8 rounded-lg shadow-xl max-w-xl mx-auto">
+            <form action="{{ url_for('edit_record', record_index=record_index) }}" method="POST" class="space-y-4">
+                <input type="hidden" name="record_index" value="{{ record_index }}">
+
+                <div>
+                    <label for="date" class="block text-gray-700 text-sm font-semibold mb-2">Date</label>
+                    <input type="date" id="date" name="date" value="{{ record.date | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                </div>
+
+                <div>
+                    <label for="type" class="block text-gray-700 text-sm font-semibold mb-2">Record Type</label>
+                    <select id="type" name="type" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                        <option value="feed_input" {% if record.type == 'feed_input' %}selected{% endif %}>Feed Input</option>
+                        <option value="expenditure" {% if record.type == 'expenditure' %}selected{% endif %}>Expenditure</option>
+                        <option value="profit" {% if record.type == 'profit' %}selected{% endif %}>Profit/Sales</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="category" class="block text-gray-700 text-sm font-semibold mb-2">Category</label>
+                    <select id="category" name="category" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" required>
+                        <option value="">Select Category</option>
+                        <option value="Layers" {% if record.category == 'Layers' %}selected{% endif %}>Layers</option>
+                        <option value="Broilers" {% if record.category == 'Broilers' %}selected{% endif %}>Broilers</option>
+                        <option value="Goats" {% if record.category == 'Goats' %}selected{% endif %}>Goats</option>
+                        <option value="Sheep" {% if record.category == 'Sheep' %}selected{% endif %}>Sheep</option>
+                        <option value="General" {% if record.category == 'General' %}selected{% endif %}>General Farm Expenses</option>
+                        <option value="Medication" {% if record.category == 'Medication' %}selected{% endif %}>Medication</option>
+                        <option value="Equipment" {% if record.category == 'Equipment' %}selected{% endif %}>Equipment</option>
+                        <option value="Labor" {% if record.category == 'Labor' %}selected{% endif %}>Labor</option>
+                        <option value="Utilities" {% if record.category == 'Utilities' %}selected{% endif %}>Utilities</option>
+                        <option value="Other" {% if record.category == 'Other' %}selected{% endif %}>Other</option>
+                        <option value="Other Livestock" {% if record.category == 'Other Livestock' %}selected{% endif %}>Other Livestock</option>
+                    </select>
+                </div>
+
+                <div>
+                    <label for="item" class="block text-gray-700 text-sm font-semibold mb-2">Item/Description</label>
+                    <input type="text" id="item" name="item" value="{{ record.item | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., Layer Mash, Water bill, Eggs Sold" required>
+                </div>
+
+                <div id="quantity_field" class="{% if record.type == 'expenditure' %}hidden{% endif %}">
+                    <label for="quantity" class="block text-gray-700 text-sm font-semibold mb-2">Quantity</label>
+                    <input type="number" id="quantity" name="quantity" step="any" value="{{ record.quantity | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., 50 (kg, crates, birds)">
+                </div>
+
+                <div id="unit_field" class="{% if record.type == 'expenditure' %}hidden{% endif %}">
+                    <label for="unit" class="block text-gray-700 text-sm font-semibold mb-2">Unit</label>
+                    <input type="text" id="unit" name="unit" value="{{ record.unit | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., kg, crates, birds">
+                </div>
+
+                <div id="amount_field" class="{% if record.type != 'expenditure' %}hidden{% endif %}">
+                    <label for="amount" class="block text-gray-700 text-sm font-semibold mb-2">Amount</label>
+                    <input type="number" id="amount" name="amount" step="0.01" value="{{ record.amount | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., 250.00">
+                </div>
+
+                <div id="profit_per_unit_field" class="{% if record.type != 'profit' %}hidden{% endif %}">
+                    <label for="profit_per_unit" class="block text-gray-700 text-sm font-semibold mb-2">Profit per Unit</label>
+                    <input type="number" id="profit_per_unit" name="profit_per_unit" step="0.01" value="{{ record.profit_per_unit | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="e.g., 15.00">
+                </div>
+
+                <div id="total_profit_field" class="{% if record.type != 'profit' %}hidden{% endif %}">
+                    <label for="total_profit" class="block text-gray-700 text-sm font-semibold mb-2">Total Profit</label>
+                    <input type="number" id="total_profit" name="total_profit" step="0.01" value="{{ record.total_profit | default('') }}" class="w-full p-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="Calculated automatically" readonly>
+                </div>
+
+                <div class="flex justify-between mt-6">
+                    <button type="submit" class="bg-green-600 hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-300">
+                        Update Record
+                    </button>
+                    <a href="{{ url_for('view_records') }}" class="bg-gray-400 hover:bg-gray-500 text-white font-bold py-3 px-6 rounded-lg focus:outline-none focus:shadow-outline transition-colors duration-300">
+                        Cancel
+                    </a>
+                </div>
+            </form>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-8 px-4 mt-auto">
+        <div class="container mx-auto text-center">
+            <p>&copy; 2025 FarmPro. All rights reserved.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const recordTypeSelect = document.getElementById('type');
+            const quantityField = document.getElementById('quantity_field');
+            const unitField = document.getElementById('unit_field');
+            const amountField = document.getElementById('amount_field');
+            const profitPerUnitField = document.getElementById('profit_per_unit_field');
+            const totalProfitField = document.getElementById('total_profit_field');
+
+            const quantityInput = document.getElementById('quantity');
+            const profitPerUnitInput = document.getElementById('profit_per_unit');
+            const totalProfitInput = document.getElementById('total_profit');
+
+            function toggleFields() {
+                const selectedType = recordTypeSelect.value;
+
+                if (selectedType === 'feed_input' || selectedType === 'profit') {
+                    quantityField.classList.remove('hidden');
+                    unitField.classList.remove('hidden');
+                } else {
+                    quantityField.classList.add('hidden');
+                    unitField.classList.add('hidden');
+                }
+
+                if (selectedType === 'expenditure') {
+                    amountField.classList.remove('hidden');
+                } else {
+                    amountField.classList.add('hidden');
+                }
+
+                if (selectedType === 'profit') {
+                    profitPerUnitField.classList.remove('hidden');
+                    totalProfitField.classList.remove('hidden');
+                } else {
+                    profitPerUnitField.classList.add('hidden');
+                    totalProfitField.classList.add('hidden');
+                }
+            }
+
+            function calculateTotalProfit() {
+                const quantity = parseFloat(quantityInput.value) || 0;
+                const profitPerUnit = parseFloat(profitPerUnitInput.value) || 0;
+                totalProfitInput.value = (quantity * profitPerUnit).toFixed(2);
+            }
+
+            recordTypeSelect.addEventListener('change', toggleFields);
+            quantityInput.addEventListener('input', calculateTotalProfit);
+            profitPerUnitInput.addEventListener('input', calculateTotalProfit);
+
+            // Initial toggle based on loaded record type
+            toggleFields();
+            // Initial calculation if already a profit record
+            if (recordTypeSelect.value === 'profit') {
+                calculateTotalProfit();
+            }
+        });
+    </script>
+</body>
+</html>
