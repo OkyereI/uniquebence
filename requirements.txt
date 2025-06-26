@@ -58,7 +58,7 @@ matplotlib-inline==0.1.7
 multidict==6.0.5
 mysql==0.0.3
 # mysqlclient>=2.2.0
-numpy<2.0.0
+numpy
 oauth2client==4.1.2
 oauthlib==3.2.2
 openpyxl==3.1.2
