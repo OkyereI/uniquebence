@@ -122,3 +122,4 @@ WTForms==3.1.2
 XlsxWriter==3.2.3
 yarl==1.9.4
 zopfli==0.2.3.post1
+--only-binary :all:
