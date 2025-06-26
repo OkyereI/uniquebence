@@ -772,12 +772,12 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- Configuration ---
 # Admin credentials from environment variables (recommended for web deployment)
 # These will be pulled from Render's environment variables
-ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin') # Default for local dev if .env missing
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'password123') # Default for local dev if .env missing
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'Uniquebence') # Default for local dev if .env missing
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Uniquebence@2025') # Default for local dev if .env missing
 
 # Arkesel SMS API Key (from environment variable)
 ARKESEL_API_KEY = os.environ.get('ARKESEL_API_KEY') # No default, MUST be set in env for SMS to work
-ARKESEL_SENDER_ID = os.environ.get('ARKESEL_SENDER_ID', 'FarmApp') # Your registered sender ID
+ARKESEL_SENDER_ID = os.environ.get('ARKESEL_SENDER_ID', 'uniquebence') # Your registered sender ID
 
 # Google Sheet Configuration - Use environment variable for the ID
 # UPDATED GOOGLE_SHEET_ID to the latest one provided by you: 18NjH0VhNolUA3m_2JGvqR9oubcON92OVMQBxdf3Axi8
