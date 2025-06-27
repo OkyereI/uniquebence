@@ -786,63 +786,48 @@ GOOGLE_SHEET_ID = os.environ.get('GOOGLE_SHEET_ID', "18NjH0VhNolUA3m_2JGvqR9oubc
 
 # --- Google Sheets Integration ---
 def init_google_sheets_client():
-    """
-    Initializes Google Sheets client by reconstructing the service account key
-    from individual environment variables. This is suitable for cloud deployments.
-    """
-    print("--- DEBUG: init_google_sheets_client: Attempting to initialize Google Sheets client...")
-
-    service_account_info = {}
-    env_vars_to_check = [
-        "GOOGLE_TYPE", "GOOGLE_PROJECT_ID", "GOOGLE_PRIVATE_KEY_ID", 
-        "GOOGLE_PRIVATE_KEY", "GOOGLE_CLIENT_EMAIL", "GOOGLE_CLIENT_ID",
-        "GOOGLE_AUTH_URI", "GOOGLE_TOKEN_URI", "GOOGLE_AUTH_PROVIDER_X509_CERT_URL",
-        "GOOGLE_CLIENT_X509_CERT_URL", "GOOGLE_UNIVERSE_DOMAIN"
-    ]
-
-    for key in env_vars_to_check:
-        value = os.environ.get(key)
-        # Convert environment variable names (e.g., GOOGLE_PRIVATE_KEY) to JSON key names (e.g., private_key)
-        service_account_info[key.lower().replace('google_', '')] = value
-        print(f"--- DEBUG: init_google_sheets_client: Env Var {key}: {value!r}")
-
-    # Special handling for private_key: replace escaped newlines (\\n) with actual newlines (\n)
-    if service_account_info.get("private_key"):
-        service_account_info["private_key"] = service_account_info["private_key"].replace("\\n", "\n")
-        # Print only a snippet of the private key for security in logs
-        print(f"--- DEBUG: init_google_sheets_client: Private key after newline replacement (first 50 chars): {service_account_info['private_key'][:50]!r}...")
-
-    # Validate critical parts - ensure private_key and client_email are present
-    if not service_account_info.get("private_key") or not service_account_info.get("client_email"):
-        print("--- DEBUG: init_google_sheets_client: ERROR: Missing critical Google service account environment variables (private_key or client_email are empty/None).")
-        return None
-
-    temp_key_file_path = None
+    """Initialize Google Sheets client with better error handling"""
     try:
-        # Create a temporary JSON file from the environment variable data
-        with tempfile.NamedTemporaryFile(mode='w', delete=False, suffix='.json') as temp_key_file_obj:
-            json.dump(service_account_info, temp_key_file_obj, indent=2)
-            temp_key_file_path = temp_key_file_obj.name
+        import json
+        from google.oauth2.service_account import Credentials
         
-        print(f"--- DEBUG: init_google_sheets_client: Temporary key file created at: {temp_key_file_path}")
+        # Verify all required environment variables exist
+        required_vars = [
+            'GOOGLE_TYPE', 'GOOGLE_PROJECT_ID', 'GOOGLE_PRIVATE_KEY_ID',
+            'GOOGLE_PRIVATE_KEY', 'GOOGLE_CLIENT_EMAIL', 'GOOGLE_CLIENT_ID',
+            'GOOGLE_AUTH_URI', 'GOOGLE_TOKEN_URI', 
+            'GOOGLE_AUTH_PROVIDER_X509_CERT_URL', 'GOOGLE_CLIENT_X509_CERT_URL'
+        ]
+        
+        missing_vars = [var for var in required_vars if not os.getenv(var)]
+        if missing_vars:
+            raise ValueError(f"Missing required environment variables: {missing_vars}")
 
-        scope = ['https://spreadsheets.google.com/feeds', 'https://www.googleapis.com/auth/drive']
-        creds = ServiceAccountCredentials.from_json_keyfile_name(temp_key_file_path, scope)
-        client = gspread.authorize(creds)
-        print("--- DEBUG: init_google_sheets_client: Google Sheets client initialized successfully.")
-        return client
-    except FileNotFoundError:
-        print(f"--- DEBUG: init_google_sheets_client: ERROR: Temporary service account key file not found at {temp_key_file_path}. This should not happen if created correctly.")
-        return None
+        # Create credentials dictionary
+        creds_dict = {
+            "type": os.getenv("GOOGLE_TYPE"),
+            "project_id": os.getenv("GOOGLE_PROJECT_ID"),
+            "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
+            "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
+            "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
+            "client_id": os.getenv("GOOGLE_CLIENT_ID"),
+            "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
+            "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
+            "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+            "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_X509_CERT_URL")
+        }
+
+        # Create credentials and authorize client
+        scopes = [
+            'https://www.googleapis.com/auth/spreadsheets',
+            'https://www.googleapis.com/auth/drive'
+        ]
+        creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
+        return gspread.authorize(creds)
+        
     except Exception as e:
-        print(f"--- DEBUG: init_google_sheets_client: ERROR: Failed to initialize Google Sheets client: {e}")
+        current_app.logger.error(f"Google Sheets init failed: {str(e)}")
         return None
-    finally:
-        # Clean up the temporary file (important for security)
-        if temp_key_file_path and os.path.exists(temp_key_file_path):
-            os.remove(temp_key_file_path)
-            print(f"--- DEBUG: init_google_sheets_client: Removed temporary key file: {temp_key_file_path}")
-
 
 def get_sheet(client, sheet_id):
     """Gets a specific worksheet using the spreadsheet ID."""
