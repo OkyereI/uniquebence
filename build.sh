@@ -35,28 +35,11 @@
 # # Important: After this script runs, Render will typically use the activated venv
 # # for subsequent commands like `gunicorn app:app`.
 #!/usr/bin/env bash
+#!/usr/bin/env bash
 set -eo pipefail
 
-echo "=== Starting Custom Build ==="
-
-# System dependencies (essential for pandas, mysqlclient, etc.)
-echo "--- Installing system dependencies ---"
-sudo apt-get update
-sudo apt-get install -y \
-    python3-dev \
-    default-libmysqlclient-dev \
-    build-essential \
-    libssl-dev \
-    libffi-dev
-
-echo "--- Creating Python virtual environment ---"
-python -m venv /opt/render/venv
-source /opt/render/venv/bin/activate
-
-echo "--- Upgrading pip and setuptools ---"
+echo "=== Installing Python Packages ==="
 pip install --upgrade pip setuptools wheel
-
-echo "--- Installing Python packages ---"
 pip install -r requirements.txt
 
 echo "=== Build Completed Successfully ==="
