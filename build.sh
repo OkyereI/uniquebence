@@ -36,14 +36,14 @@
 # # for subsequent commands like `gunicorn app:app`.
 #!/usr/bin/env bash
 #!/usr/bin/env bash
-s#!/usr/bin/env bash
-set -eo pipefail
+#!/usr/bin/env bash
+set -e
 
 echo "=== Verifying Python Version ==="
-python --version  # Should show 3.11.x
+python --version  # This MUST show 3.11.x
 
-echo "=== Installing Python Packages ==="
-pip install --upgrade "pip<23.3" setuptools==65.5.0 wheel
+echo "=== Installing Requirements ==="
+pip install --upgrade pip
 pip install -r requirements.txt
 
-echo "=== Build Completed Successfully ==="
+echo "=== Build Successful ==="
