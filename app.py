@@ -788,45 +788,42 @@ GOOGLE_SHEET_ID = os.environ.get('GOOGLE_SHEET_ID', "18NjH0VhNolUA3m_2JGvqR9oubc
 def init_google_sheets_client():
     """Initialize Google Sheets client with better error handling"""
     try:
-        import json
         from google.oauth2.service_account import Credentials
+        import logging
         
-        # Verify all required environment variables exist
-        required_vars = [
-            'GOOGLE_TYPE', 'GOOGLE_PROJECT_ID', 'GOOGLE_PRIVATE_KEY_ID',
-            'GOOGLE_PRIVATE_KEY', 'GOOGLE_CLIENT_EMAIL', 'GOOGLE_CLIENT_ID',
-            'GOOGLE_AUTH_URI', 'GOOGLE_TOKEN_URI', 
-            'GOOGLE_AUTH_PROVIDER_X509_CERT_URL', 'GOOGLE_CLIENT_X509_CERT_URL'
-        ]
+        # Verify private key exists and is properly formatted
+        private_key = os.getenv('GOOGLE_PRIVATE_KEY')
+        if not private_key:
+            logging.error("GOOGLE_PRIVATE_KEY environment variable is missing")
+            return None
+            
+        # Fix newline characters in private key
+        private_key = private_key.replace('\\n', '\n')
         
-        missing_vars = [var for var in required_vars if not os.getenv(var)]
-        if missing_vars:
-            raise ValueError(f"Missing required environment variables: {missing_vars}")
-
         # Create credentials dictionary
         creds_dict = {
-            "type": os.getenv("GOOGLE_TYPE"),
+            "type": "service_account",
             "project_id": os.getenv("GOOGLE_PROJECT_ID"),
             "private_key_id": os.getenv("GOOGLE_PRIVATE_KEY_ID"),
-            "private_key": os.getenv("GOOGLE_PRIVATE_KEY").replace("\\n", "\n"),
+            "private_key": private_key,
             "client_email": os.getenv("GOOGLE_CLIENT_EMAIL"),
             "client_id": os.getenv("GOOGLE_CLIENT_ID"),
-            "auth_uri": os.getenv("GOOGLE_AUTH_URI"),
-            "token_uri": os.getenv("GOOGLE_TOKEN_URI"),
-            "auth_provider_x509_cert_url": os.getenv("GOOGLE_AUTH_PROVIDER_X509_CERT_URL"),
+            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+            "token_uri": "https://oauth2.googleapis.com/token",
+            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
             "client_x509_cert_url": os.getenv("GOOGLE_CLIENT_X509_CERT_URL")
         }
 
-        # Create credentials and authorize client
         scopes = [
             'https://www.googleapis.com/auth/spreadsheets',
             'https://www.googleapis.com/auth/drive'
         ]
+        
         creds = Credentials.from_service_account_info(creds_dict, scopes=scopes)
         return gspread.authorize(creds)
         
     except Exception as e:
-        current_app.logger.error(f"Google Sheets init failed: {str(e)}")
+        logging.error(f"Google Sheets init failed: {str(e)}")
         return None
 
 def get_sheet(client, sheet_id):
