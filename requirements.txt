@@ -1,10 +1,23 @@
+# Flask==2.3.2
+# gspread==5.12.2
+# oauth2client==4.1.2
+# pandas # Changed from pandas==2.0.3 to allow pip to find a compatible, available version
+# numpy  # Keeps the flexibility we previously added
+# openpyxl==3.1.2
+# requests==2.31.0
+# python-dotenv==1.0.1
+# mysqlclient<3.0.0 # Keeps the flexibility we previously added
+# gunicorn
 Flask==2.3.2
 gspread==5.12.2
-oauth2client==4.1.2
-pandas # Changed from pandas==2.0.3 to allow pip to find a compatible, available version
-numpy  # Keeps the flexibility we previously added
+oauth2client==4.1.3
+pandas==2.0.3
+numpy==1.24.3
 openpyxl==3.1.2
 requests==2.31.0
 python-dotenv==1.0.1
-mysqlclient<3.0.0 # Keeps the flexibility we previously added
-gunicorn
+mysqlclient==2.1.1
+gunicorn==21.2.0
+google-auth==2.22.0
+google-auth-oauthlib==1.0.0
+google-api-python-client==2.86.0

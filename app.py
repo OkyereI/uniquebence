@@ -1477,7 +1477,7 @@ def create_app():
 
         return render_template('monthly_report.html', report_data=report_data, report_title="Monthly Profit & Expenditure Report")
 
-
+    
     @app_instance.route('/admin/reports/weekly')
     def view_weekly_report():
         print("--- DEBUG: app.py: view_weekly_report() route called.")
