@@ -23,8 +23,8 @@ from oauth2client.service_account import ServiceAccountCredentials
 # --- Configuration ---
 # Admin credentials from environment variables (recommended for web deployment)
 # These will be pulled from Render's environment variables
-ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'admin') # Default for local dev if .env missing
-ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'password123') # Default for local dev if .env missing
+ADMIN_USERNAME = os.environ.get('ADMIN_USERNAME', 'Uniquebence') # Default for local dev if .env missing
+ADMIN_PASSWORD = os.environ.get('ADMIN_PASSWORD', 'Uniquebence@2025') # Default for local dev if .env missing
 
 # Arkesel SMS API Key (from environment variable)
 ARKESEL_API_KEY = os.environ.get('ARKESEL_API_KEY') # No default, MUST be set in env for SMS to work
@@ -228,6 +228,29 @@ def save_record(record_type, data):
 
     return google_sheet_success or csv_success # Return true if either save method succeeded
 
+def get_safe_sum(df_filtered, col_name):
+    """
+    Safely sums a column from a filtered DataFrame slice.
+    Ensures the column is numeric and handles empty slices.
+    """
+    # Check if the filtered DataFrame is empty or if the column doesn't exist
+    if df_filtered.empty or col_name not in df_filtered.columns:
+        return 0.0
+    
+    # Now that we know df_filtered is not empty and col_name exists,
+    # proceed with numeric conversion and sum
+    try:
+        # Ensure the column is numeric and fill NaN before summing
+        # pd.to_numeric handles converting various types (strings, numbers) to numeric.
+        numeric_series = pd.to_numeric(df_filtered[col_name], errors='coerce').fillna(0)
+        # .sum() on a numeric Series returns a numpy scalar, which float() can handle.
+        return float(numeric_series.sum())
+    except Exception as e:
+        # This catch is for extremely unexpected cases,
+        # as pd.to_numeric on a valid Series/list should not raise a TypeError like this.
+        # It means the initial check or data structure is more complex than expected.
+        print(f"--- ERROR: get_safe_sum: Exception processing column '{col_name}': {e}")
+        return 0.0
 
 def get_farm_statistics():
     """Retrieves aggregated farm data for dashboard statistics from Google Sheets or CSV fallback."""
@@ -235,70 +258,91 @@ def get_farm_statistics():
     if df.empty:
         print("--- DEBUG: get_farm_statistics: No records found for statistics.")
         return {
-            'total_feeds_kg': 0,
-            'total_expenditure': 0,
-            'total_profit': 0,
-            'layers_eggs_sold_crates': 0,
-            'broilers_birds_sold': 0,
-            'goats_sold': 0,
-            'sheep_sold': 0
+            'total_feeds_kg': 0.0,
+            'total_expenditure': 0.0,
+            'total_profit': 0.0,
+            'layers_eggs_sold_crates': 0.0,
+            'broilers_birds_sold': 0.0,
+            'goats_sold': 0.0,
+            'sheep_sold': 0.0
         }
 
-    # Convert numeric columns to numeric, coercing errors
-    for col in ['Quantity', 'Amount', 'Profit Per Unit', 'Total Profit']: # Use actual column names
-        if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
-
-    # Rename columns to be lowercase for easier access in Python (optional, but good practice)
-    # This might already be handled by get_all_farm_records_df
+    # Columns are already converted to numeric (float) and lowercased for Type, Category, Item
+    # in get_all_farm_records_df.
+    # We still need to lowercase all columns that were not explicitly handled
+    # by renaming or initial lowercasing in get_all_farm_records_df
     df.columns = [col.replace(' ', '_').lower() for col in df.columns]
 
+    # Ensure 'type' and 'category' columns exist and are lowercased for consistent filtering
+    # These are already handled in get_all_farm_records_df
+    # if 'type' in df.columns:
+    #     df['type'] = df['type'].astype(str).str.lower()
+    # if 'category' in df.columns:
+    #     df['category'] = df['category'].astype(str).str.lower()
+    # if 'item' in df.columns:
+    #     df['item'] = df['item'].astype(str).str.lower()
+
     stats = {
-        'total_feeds_kg': df[df['type'] == 'feed_input']['quantity'].sum() if 'type' in df.columns and 'quantity' in df.columns else 0,
-        'total_expenditure': df[df['type'] == 'expenditure']['amount'].sum() if 'type' in df.columns and 'amount' in df.columns else 0,
-        'total_profit': df[df['type'] == 'profit']['total_profit'].sum() if 'type' in df.columns and 'total_profit' in df.columns else 0,
-        'layers_eggs_sold_crates': df[(df['type'] == 'profit') & (df['category'] == 'Layers') & (df['item'] == 'Eggs Sold')]['quantity'].sum() if 'type' in df.columns and 'category' in df.columns and 'item' in df.columns and 'quantity' in df.columns else 0,
-        'broilers_birds_sold': df[(df['type'] == 'profit') & (df['category'] == 'Broilers') & (df['item'] == 'Birds Sold')]['quantity'].sum() if 'type' in df.columns and 'category' in df.columns and 'item' in df.columns and 'quantity' in df.columns else 0,
-        'goats_sold': df[(df['type'] == 'profit') & (df['category'] == 'Goats') & (df['item'] == 'Goat Meat')]['quantity'].sum() if 'type' in df.columns and 'category' in df.columns and 'item' in df.columns and 'quantity' in df.columns else 0,
-        'sheep_sold': df[(df['type'] == 'profit') & (df['category'] == 'Sheep') & (df['item'] == 'Sheep Meat')]['quantity'].sum() if 'type' in df.columns and 'category' in df.columns and 'item' in df.columns and 'quantity' in df.columns else 0,
+        'total_feeds_kg': get_safe_sum(df[df['type'] == 'feed_input'], 'quantity'),
+        'total_expenditure': get_safe_sum(df[df['type'] == 'expenditure'], 'amount'),
+        'total_profit': get_safe_sum(df[df['type'] == 'profit'], 'total_profit'),
+        'layers_eggs_sold_crates': get_safe_sum(df[(df['type'] == 'profit') & (df['category'] == 'layers') & (df['item'] == 'eggs sold')], 'quantity'),
+        'broilers_birds_sold': get_safe_sum(df[(df['type'] == 'profit') & (df['category'] == 'broilers') & (df['item'] == 'birds sold')], 'quantity'),
+        'goats_sold': get_safe_sum(df[(df['type'] == 'profit') & (df['category'] == 'goats') & (df['item'] == 'goat meat')], 'quantity'),
+        'sheep_sold': get_safe_sum(df[(df['type'] == 'profit') & (df['category'] == 'sheep') & (df['item'] == 'sheep meat')], 'quantity'),
     }
     return stats
 
 def get_all_farm_records_df():
-    """Retrieves all farm records as a pandas DataFrame, prioritizing Google Sheets, with CSV as fallback."""
+    """
+    Retrieves all farm records as a pandas DataFrame,
+    prioritizing local CSV, then falling back to Google Sheets.
+    """
     print("--- DEBUG: get_all_farm_records_df: Called to retrieve all farm records.")
     
     records = []
-    from_google_sheets = False
-
-    # Attempt to retrieve from Google Sheets first
-    client = init_google_sheets_client()
-    if client:
-        sheet = get_sheet(client, GOOGLE_SHEET_ID)
-        if sheet:
-            try:
-                records = sheet.get_all_records()
-                if records:
-                    print(f"--- DEBUG: get_all_farm_records_df: Successfully retrieved {len(records)} records from Google Sheet.")
-                    from_google_sheets = True
-                else:
-                    print("--- DEBUG: get_all_farm_records_df: Google Sheet is empty.")
-                    flash("No records found in the Google Sheet.", "info")
-            except Exception as e:
-                print(f"--- DEBUG: get_all_farm_records_df: ERROR retrieving records from Google Sheet: {e}")
-                flash("Error retrieving records from Google Sheet. Check server logs.", "danger")
-        else:
-            flash(f"Could not open Google Sheet with ID '{GOOGLE_SHEET_ID}'. Check server logs.", "danger")
-    else:
-        flash("Google Sheets client could not be initialized for record retrieval.", "danger")
-
-    # If Google Sheets failed or is empty and CSV fallback is enabled, try CSV
-    if (not from_google_sheets or not records) and USE_CSV_FALLBACK:
-        flash("Falling back to local CSV for records retrieval. Data may not be up-to-date or persist.", "warning")
-        print("--- DEBUG: get_all_farm_records_df: Attempting to read records from CSV fallback.")
+    
+    # --- Step 1: Attempt to read from CSV first (new primary read source) ---
+    if USE_CSV_FALLBACK: # Only attempt CSV if the feature is enabled
+        print("--- DEBUG: get_all_farm_records_df: Attempting to read records from local CSV.")
         records = read_records_from_csv(CSV_FILE_PATH)
-        if not records:
-            flash("No records found in local CSV.", "info")
+        if records:
+            print(f"--- DEBUG: get_all_farm_records_df: Successfully retrieved {len(records)} records from local CSV.")
+            flash("Records loaded from local CSV.", "info")
+            # If CSV has records, we'll process and return them.
+            # No need to try Google Sheets for reading in this path.
+        else:
+            print("--- DEBUG: get_all_farm_records_df: No records found in local CSV or CSV read failed.")
+            flash("No records found in local CSV. Attempting Google Sheet.", "info") # Inform user about fallback
+    else:
+        print("--- DEBUG: get_all_farm_records_df: CSV fallback disabled. Skipping CSV read.")
+
+
+    # --- Step 2: If CSV is empty or not used, attempt to retrieve from Google Sheets ---
+    if not records: # Only proceed to Google Sheets if no records were found from CSV
+        print("--- DEBUG: get_all_farm_records_df: Attempting to retrieve from Google Sheets.")
+        client = init_google_sheets_client()
+        if client:
+            sheet = get_sheet(client, GOOGLE_SHEET_ID)
+            if sheet:
+                try:
+                    records = sheet.get_all_records()
+                    if records:
+                        print(f"--- DEBUG: get_all_farm_records_df: Successfully retrieved {len(records)} records from Google Sheet.")
+                        flash("Records loaded from Google Sheet.", "success")
+                    else:
+                        print("--- DEBUG: get_all_farm_records_df: Google Sheet is empty.")
+                        flash("No records found in the Google Sheet.", "info")
+                except Exception as e:
+                    print(f"--- DEBUG: get_all_farm_records_df: ERROR retrieving records from Google Sheet: {e}")
+                    flash("Error retrieving records from Google Sheet. Check server logs.", "danger")
+            else:
+                flash(f"Could not open Google Sheet with ID '{GOOGLE_SHEET_ID}'. Check server logs.", "danger")
+        else:
+            flash("Google Sheets client could not be initialized for record retrieval.", "danger")
+    else:
+        print("--- DEBUG: get_all_farm_records_df: Records already retrieved from CSV. Skipping Google Sheets read.")
+
 
     if not records:
         print("--- DEBUG: get_all_farm_records_df: No records found from any source, returning empty DataFrame.")
@@ -373,6 +417,20 @@ def get_all_farm_records_df():
     print(f"--- DEBUG: After standardization and adding missing, DataFrame columns: {df.columns.tolist()}")
     print(f"--- DEBUG: DataFrame head after column processing:\n{df.head().to_string()}")
 
+    # Normalize 'Type', 'Category', and 'Item' column values to lowercase for consistent filtering
+    if 'Type' in df.columns:
+        df['Type'] = df['Type'].astype(str).str.lower()
+        print("--- DEBUG: get_all_farm_records_df: 'Type' column values lowercased.")
+    
+    if 'Category' in df.columns:
+        df['Category'] = df['Category'].astype(str).str.lower()
+        print("--- DEBUG: get_all_farm_records_df: 'Category' column values lowercased.")
+    
+    if 'Item' in df.columns:
+        df['Item'] = df['Item'].astype(str).str.lower()
+        print("--- DEBUG: get_all_farm_records_df: 'Item' column values lowercased.")
+
+
     # Check for critical columns and flash warnings if they were added as empty
     critical_columns_for_warning = ['Date', 'Type', 'Amount', 'Total Profit']
     for col_name in critical_columns_for_warning:
@@ -424,13 +482,14 @@ def get_all_farm_records_df():
     # for columns that might have mixed types from Google Sheets.
     for col in ['Quantity', 'Amount', 'Profit Per Unit', 'Total Profit']:
         if col in df.columns:
-            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0)
+            # Explicitly convert to numeric, fill NaN, and then ensure float type
+            df[col] = pd.to_numeric(df[col], errors='coerce').fillna(0).astype(float)
     
     print(f"--- DEBUG: Final DataFrame shape being returned: {df.shape}")
     print(f"--- DEBUG: Final DataFrame head being returned:\n{df.head().to_string()}")
     return df
 
-def update_record_in_sheet(row_index_in_sheet, updated_data_dict):
+def update_record_in_sheet(row_index_in_sheet, updated_data_dict, df_record_index=None):
     """Updates a specific row in the Google Sheet and optionally in local CSV."""
     google_sheet_success = False
     
@@ -453,7 +512,7 @@ def update_record_in_sheet(row_index_in_sheet, updated_data_dict):
                 print(f"--- DEBUG: update_record_in_sheet: ERROR updating Google Sheet row {row_index_in_sheet}: {e}")
                 flash('Failed to update record in Google Sheet. Check server logs.', 'danger')
         else:
-            flash(f"Could not open Google Sheet with ID '{GOOGLE_SHEET_ID}' for update. Check server logs.", "danger")
+            flash(f"Could not open Google Sheet with ID '{GOOGLE_SHEET_ID}'. Check server logs.", "danger")
     else:
         flash("Google Sheets client could not be initialized for update. Check server logs.", "danger")
 
@@ -466,15 +525,18 @@ def update_record_in_sheet(row_index_in_sheet, updated_data_dict):
         
         # Google Sheet row_index_in_sheet is 1-indexed for headers + actual row
         # DataFrame index is 0-indexed.
-        # So df_index = row_index_in_sheet - 2
-        df_index = row_index_in_sheet - 2 
+        # So df_index = row_index_in_sheet - 2 
 
-        if not all_records_df.empty and 0 <= df_index < len(all_records_df):
+        # Use df_record_index passed from the calling function
+        if not all_records_df.empty and df_record_index is not None and 0 <= df_record_index < len(all_records_df):
             # Update the DataFrame at the specific index
             for key, value in updated_data_dict.items():
-                if key in all_records_df.columns.str.lower().str.replace('_', ' '):
-                    col_name_in_df = all_records_df.columns[all_records_df.columns.str.lower().str.replace('_', ' ') == key].iloc[0]
-                    all_records_df.at[df_index, col_name_in_df] = value
+                # Find the actual column name in the DataFrame (which might have mixed casing or spaces)
+                # and update the cell using .at for label-based indexing
+                matched_cols = [col for col in all_records_df.columns if col.replace(' ', '_').lower() == key]
+                if matched_cols:
+                    col_name_in_df = matched_cols[0]
+                    all_records_df.at[df_record_index, col_name_in_df] = value
                 
             csv_success = write_records_to_csv(CSV_FILE_PATH, all_records_df)
             if csv_success:
@@ -482,13 +544,13 @@ def update_record_in_sheet(row_index_in_sheet, updated_data_dict):
             else:
                 flash("Failed to update record in local CSV.", "danger")
         elif not all_records_df.empty:
-            print(f"--- DEBUG: update_record_in_sheet: DataFrame index {df_index} out of bounds for CSV update (df size: {len(all_records_df)})")
+            print(f"--- DEBUG: update_record_in_sheet: DataFrame index {df_record_index} out of bounds for CSV update (df size: {len(all_records_df)})")
             flash("Could not find record in local CSV for update. It might not exist there yet.", "warning")
         else:
              print(f"--- DEBUG: update_record_in_sheet: No records in CSV for update.")
              flash("No records in local CSV to update.", "info")
 
-    return google_sheet_success or csv_success # Return true if either update method succeeded
+    return google_sheet_success or csv_success # Return true if either save method succeeded
 
 
 def create_app():
@@ -614,7 +676,7 @@ def create_app():
                 data['type'] = 'profit'
                 data['category'] = request.form['profit_category']
                 data['item'] = request.form['profit_item']
-                data['quantity'] = int(request.form['profit_quantity'])
+                data['quantity'] = float(request.form['profit_quantity']) # Changed to float for consistency
                 data['profit_per_unit'] = float(request.form['profit_per_unit'])
                 data['total_profit'] = data['quantity'] * data['profit_per_unit']
                 data['unit'] = 'crates' if 'Eggs' in data['item'] else ('birds' if 'Birds' in data['item'] else 'units')
@@ -711,6 +773,11 @@ def create_app():
             return redirect(url_for('login'))
 
         df_records = get_all_farm_records_df()
+        
+        # --- DEBUG: Added to confirm DataFrame size ---
+        print(f"--- DEBUG: edit_record: Retrieved {len(df_records)} records from get_all_farm_records_df().")
+        # --- END DEBUG ---
+
         if df_records.empty:
             flash("No records found to edit.", "danger")
             return redirect(url_for('view_records'))
@@ -718,6 +785,9 @@ def create_app():
         # Adjust index for DataFrame (0-indexed)
         # Assuming record_index from URL is 0-indexed based on rendered list
         if record_index < 0 or record_index >= len(df_records):
+            # --- DEBUG: Added to confirm out-of-bounds index ---
+            print(f"--- DEBUG: edit_record: Invalid record_index {record_index}. DataFrame has {len(df_records)} records.")
+            # --- END DEBUG ---
             flash("Record not found for editing.", "danger")
             return redirect(url_for('view_records'))
 
@@ -748,21 +818,21 @@ def create_app():
                 if updated_data[key]:
                     try:
                         updated_data[key] = float(updated_data[key])
-                        if key == 'quantity': # Quantity can be integer in some cases
-                            updated_data[key] = int(updated_data[key])
+                        # Keep quantity as float to preserve decimal values if they exist
                     except ValueError:
                         flash(f"Invalid number for {key.replace('_', ' ').title()}. Please enter a valid number.", "danger")
                         return render_template('edit_record.html', record=formatted_record, record_index=record_index)
                 else:
                     updated_data[key] = '' # Ensure empty string for missing/invalid numeric fields
 
-            if updated_data.get('quantity') and updated_data.get('profit_per_unit'):
+            if updated_data.get('quantity') != '' and updated_data.get('profit_per_unit') != '':
                 try:
                     updated_data['total_profit'] = float(updated_data['quantity']) * float(updated_data['profit_per_unit'])
                 except ValueError:
                     updated_data['total_profit'] = '' # Set to empty if calculation fails
 
-            success = update_record_in_sheet(sheet_row_number, updated_data)
+            # Pass record_index as df_record_index to update_record_in_sheet for CSV updates
+            success = update_record_in_sheet(sheet_row_number, updated_data, record_index)
             if success:
                 flash('Record updated successfully!', 'success')
                 return redirect(url_for('view_records'))
@@ -846,7 +916,7 @@ def create_app():
         df = get_all_farm_records_df()
         if df.empty:
             flash("No records available for reports.", "info")
-            return render_template('monthly_report.html', report_data={'month': datetime.now().strftime('%B %Y'), 'total_profit': 0, 'total_expenditure': 0, 'records': []}, report_title="Monthly Report")
+            return render_template('monthly_report.html', report_data={'month': datetime.now().strftime('%B %Y'), 'total_profit': 0.0, 'total_expenditure': 0.0, 'records': []}, report_title="Monthly Report")
 
         # Ensure 'Date' column is in datetime format and valid
         if 'Date' in df.columns:
@@ -855,21 +925,20 @@ def create_app():
         
         if df.empty: # Check again after dropping invalid dates
             flash("No valid date records available for this report after filtering invalid dates.", "warning")
-            return render_template('monthly_report.html', report_data={'month': datetime.now().strftime('%B %Y'), 'total_profit': 0, 'total_expenditure': 0, 'records': []}, report_title="Monthly Report")
+            return render_template('monthly_report.html', report_data={'month': datetime.now().strftime('%B %Y'), 'total_profit': 0.0, 'total_expenditure': 0.0, 'records': []}, report_title="Monthly Report")
 
 
         current_month = datetime.now().month
         current_year = datetime.now().year
         monthly_records = df[(df['Date'].dt.month == current_month) & (df['Date'].dt.year == current_year)]
 
-        # Ensure numeric columns are actually numeric before summing
-        for col in ['Amount', 'Total Profit']:
-            if col in monthly_records.columns:
-                monthly_records[col] = pd.to_numeric(monthly_records[col], errors='coerce').fillna(0)
+        # Ensure 'Type' column is lowercased for filtering
+        if 'Type' in monthly_records.columns:
+            monthly_records['Type'] = monthly_records['Type'].astype(str).str.lower()
 
 
-        total_monthly_profit = monthly_records[monthly_records['Type'] == 'Profit']['Total Profit'].sum()
-        total_monthly_expenditure = monthly_records[monthly_records['Type'] == 'Expenditure']['Amount'].sum()
+        total_monthly_profit = get_safe_sum(monthly_records[monthly_records['Type'] == 'profit'], 'Total Profit')
+        total_monthly_expenditure = get_safe_sum(monthly_records[monthly_records['Type'] == 'expenditure'], 'Amount')
 
         report_data = {
             'month': datetime.now().strftime('%B %Y'),
@@ -891,7 +960,7 @@ def create_app():
         df = get_all_farm_records_df()
         if df.empty:
             flash("No records available for reports.", "info")
-            return render_template('weekly_report.html', report_data={'week_range': 'Current Week', 'total_profit': 0, 'total_expenditure': 0, 'records': []}, report_title="Weekly Report")
+            return render_template('weekly_report.html', report_data={'week_range': 'Current Week', 'total_profit': 0.0, 'total_expenditure': 0.0, 'records': []}, report_title="Weekly Report")
 
         # Ensure 'Date' column is in datetime format and valid
         if 'Date' in df.columns:
@@ -900,7 +969,7 @@ def create_app():
 
         if df.empty: # Check again after dropping invalid dates
             flash("No valid date records available for this report after filtering invalid dates.", "warning")
-            return render_template('weekly_report.html', report_data={'week_range': 'Current Week', 'total_profit': 0, 'total_expenditure': 0, 'records': []}, report_title="Weekly Report")
+            return render_template('weekly_report.html', report_data={'week_range': 'Current Week', 'total_profit': 0.0, 'total_expenditure': 0.0, 'records': []}, report_title="Weekly Report")
 
 
         today = datetime.now().date()
@@ -909,13 +978,12 @@ def create_app():
 
         weekly_records = df[(df['Date'].dt.date >= start_of_week) & (df['Date'].dt.date <= end_of_week)]
 
-        # Ensure numeric columns are actually numeric before summing
-        for col in ['Amount', 'Total Profit']:
-            if col in weekly_records.columns:
-                weekly_records[col] = pd.to_numeric(weekly_records[col], errors='coerce').fillna(0)
+        # Ensure 'Type' column is lowercased for filtering
+        if 'Type' in weekly_records.columns:
+            weekly_records['Type'] = weekly_records['Type'].astype(str).str.lower()
 
-        total_weekly_profit = weekly_records[weekly_records['Type'] == 'Profit']['Total Profit'].sum()
-        total_weekly_expenditure = weekly_records[weekly_records['Type'] == 'Expenditure']['Amount'].sum()
+        total_weekly_profit = get_safe_sum(weekly_records[weekly_records['Type'] == 'profit'], 'Total Profit')
+        total_weekly_expenditure = get_safe_sum(weekly_records[weekly_records['Type'] == 'expenditure'], 'Amount')
 
         report_data = {
             'week_range': f"{start_of_week.strftime('%Y-%m-%d')} to {end_of_week.strftime('%Y-%m-%d')}",
